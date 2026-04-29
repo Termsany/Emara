@@ -1,27 +1,41 @@
-# Workspace
+# EMARA | عمارة
 
-## Overview
-
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+SaaS web app for managing interior architecture & design projects, built for the Egyptian market. Arabic RTL UI, EGP currency.
 
 ## Stack
+- **Monorepo**: pnpm workspaces
+- **Backend**: Node + Express + Drizzle ORM + PostgreSQL (`artifacts/api-server`)
+- **Frontend (internal)**: React + Vite + wouter + shadcn/ui + TanStack Query (`artifacts/emara`)
+- **Client portal**: Same React app, separate routes `/portal/*`
+- **API contract**: OpenAPI 3 spec at `lib/api-spec`, generates Zod schemas + React Query hooks via Orval into `lib/api-client-react`
+- **Auth**: Cookie session (express-session) with bcrypt password hashing
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+## Roles (7)
+admin, sales, designer, draftsman, qs (quantity surveyor), accountant, client
 
-## Key Commands
+## Demo Login (password: `password123`)
+- admin@emara.com
+- sales@emara.com
+- designer@emara.com
+- draftsman@emara.com
+- qs@emara.com
+- accountant@emara.com
+- ahmed.client@example.com (client portal)
 
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- `pnpm --filter @workspace/api-server run dev` — run API server locally
+## Features
+- **Internal**: Dashboard with KPIs, Projects (auto-generated workflow stages), Clients, Quotations (per-sqm pricing), Files library, Approvals queue, Payments tracking, BOQ (Bill of Quantities), User management
+- **Client portal** (`/portal`): Project progress visualization, file viewing, quotation review, payment status, comment threads, approve/reject/request-revision actions on stages
+- 3 demo projects: Villa التجمع, Apartment الشيخ زايد, Clinic المعادي
 
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+## Routes
+- `/` Dashboard, `/projects`, `/projects/:id`, `/clients`, `/clients/:id`
+- `/quotations`, `/approvals`, `/payments`, `/boq`, `/files`, `/users`, `/settings`
+- `/login`, `/portal`, `/portal/projects/:id`
+
+## Commands
+- `pnpm --filter @workspace/emara typecheck` — frontend typecheck
+- `pnpm --filter @workspace/api-server typecheck` — backend typecheck
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks/schemas
+- `pnpm --filter @workspace/db push` — apply Drizzle schema to DB
+- Workflow `artifacts/emara: web` runs the Vite dev server
+- Workflow `artifacts/api-server: API Server` runs Express

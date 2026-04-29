@@ -1,0 +1,1052 @@
+Build a full-stack MVP SaaS web application called "EMARA".
+
+Branding:
+- English app name: EMARA
+- Arabic app name: عمارة
+- Internal technical name: emara
+- The UI should show the brand as: EMARA | عمارة
+- Use "EMARA" in the codebase, package name, project name, and README.
+- Use "عمارة" in Arabic UI labels, login page tagline, sidebar, dashboard, and client portal.
+
+Product description:
+EMARA | عمارة is a SaaS platform for interior architecture, interior design, fit-out, and execution project management. It helps architecture and interior design offices manage the full workflow from client lead to design approval, BOQ, payments, and handover.
+
+Main workflow:
+Lead / Client → Quotation by square meter → Contracted Project → Site Survey → 2D Plan → Mood Board → 3D Design → Client Approval / Revision → Shop Drawings → Basic BOQ → Payments → Client Portal → Project Dashboard
+
+MVP Scope:
+Build only the first MVP.
+
+Do NOT build:
+- CAD editor
+- Real 3D viewer
+- AI rendering
+- Supplier marketplace
+- Advanced procurement
+- Inventory system
+- Subscription billing
+- Mobile app
+
+Build:
+- Authentication
+- Role-based access
+- Clients
+- Projects
+- Project workflow stages
+- Quotation by square meter
+- File uploads
+- Client approvals
+- Comments and revisions
+- Basic BOQ
+- Payments
+- Dashboard
+- Client portal
+
+Tech stack:
+- Next.js with TypeScript
+- App Router
+- Tailwind CSS
+- shadcn/ui components
+- Prisma ORM
+- SQLite database for MVP
+- Simple email/password authentication
+- bcrypt password hashing
+- Role-based access control
+- Arabic RTL interface
+- EGP currency
+- Clean modern SaaS dashboard UI
+
+UI requirements:
+- Arabic RTL layout
+- Premium interior architecture feel
+- Clean, elegant, professional dashboard
+- Warm neutral visual style
+- Cards, tables, forms, tabs, badges, progress bars
+- Sidebar navigation
+- Top bar with logged-in user
+- Responsive desktop and tablet layout
+- Do not use mock data after database is implemented, except seed data
+- Do not leave buttons that do nothing
+- Add loading states, empty states, validation, and error handling
+
+Default language:
+- UI labels must be Arabic
+- Code, database fields, enums, and route names can be English
+
+Currency:
+- Use EGP
+- Show amounts like: 75,000 EGP or ٧٥,٠٠٠ جنيه
+- Use consistent formatting across quotation, BOQ, and payments
+
+Main user roles:
+1. Admin
+2. Sales
+3. Designer
+4. Draftsman
+5. Quantity Surveyor
+6. Accountant
+7. Client
+
+Arabic role labels:
+- Admin = المدير
+- Sales = المبيعات
+- Designer = المصمم
+- Draftsman = الرسام التنفيذي
+- Quantity Surveyor = حاسب الكميات
+- Accountant = المحاسب
+- Client = العميل
+
+Authentication:
+Create a simple login page.
+
+Seed demo users:
+- admin@emara.com / password123 / Admin
+- sales@emara.com / password123 / Sales
+- designer@emara.com / password123 / Designer
+- draftsman@emara.com / password123 / Draftsman
+- qs@emara.com / password123 / Quantity Surveyor
+- accountant@emara.com / password123 / Accountant
+- client@demo.com / password123 / Client
+
+Login behavior:
+- Internal users go to the main dashboard.
+- Client users go to the client portal.
+- Client users must only see their own projects.
+- Add logout functionality.
+
+Public page:
+1. Login page
+
+Login page Arabic UI:
+- Brand: EMARA | عمارة
+- Tagline: منصة إدارة مشاريع التصميم الداخلي والتشطيب
+- Email field: البريد الإلكتروني
+- Password field: كلمة المرور
+- Login button: تسجيل الدخول
+
+Main internal navigation:
+- لوحة التحكم
+- العملاء
+- المشاريع
+- الموافقات
+- الدفعات
+- المقايسة
+- الملفات
+- الإعدادات
+
+Client portal navigation:
+- مشاريعي
+- الموافقات
+- الملفات
+- الدفعات
+- التعليقات
+
+Database models:
+Create Prisma models for:
+
+1. User
+Fields:
+- id
+- name
+- email
+- passwordHash
+- role
+- clientId optional
+- createdAt
+- updatedAt
+
+2. Client
+Fields:
+- id
+- name
+- phone
+- email
+- address
+- source
+- notes
+- createdAt
+- updatedAt
+
+3. Project
+Fields:
+- id
+- clientId
+- projectName
+- projectType
+- location
+- areaSqm
+- designStyle
+- scopeType
+- budget
+- status
+- startDate
+- expectedEndDate
+- notes
+- createdAt
+- updatedAt
+
+4. ProjectStage
+Fields:
+- id
+- projectId
+- stageName
+- order
+- status
+- assignedToId optional
+- startDate optional
+- dueDate optional
+- completedAt optional
+- requiresClientApproval
+- notes
+- createdAt
+- updatedAt
+
+5. Quotation
+Fields:
+- id
+- projectId
+- areaSqm
+- pricePerSqm
+- designSubtotal
+- shopDrawingPrice
+- supervisionPrice
+- discount
+- tax
+- finalTotal
+- status
+- createdAt
+- updatedAt
+
+6. FileAsset
+Fields:
+- id
+- projectId
+- stageId optional
+- uploadedById
+- fileName
+- fileUrl
+- fileType
+- category
+- version
+- isPublic
+- notes
+- createdAt
+
+7. Approval
+Fields:
+- id
+- projectId
+- stageId
+- requestedById
+- approvedById optional
+- status
+- clientComment
+- internalComment
+- requestedAt
+- respondedAt optional
+
+8. Comment
+Fields:
+- id
+- projectId
+- stageId optional
+- approvalId optional
+- userId
+- commentText
+- isInternal
+- revisionNumber optional
+- createdAt
+
+9. BOQItem
+Fields:
+- id
+- projectId
+- category
+- itemName
+- description
+- unit
+- quantity
+- unitPrice
+- totalPrice
+- supplierName optional
+- executionStage
+- notes
+- createdAt
+- updatedAt
+
+10. Payment
+Fields:
+- id
+- projectId
+- title
+- amount
+- dueDate
+- paidDate optional
+- status
+- paymentType
+- notes
+- createdAt
+- updatedAt
+
+Use proper relations between models.
+
+Project type options:
+- Apartment
+- Villa
+- Office
+- Restaurant
+- Clinic
+- Retail Store
+- Other
+
+Arabic project type labels:
+- Apartment = شقة
+- Villa = فيلا
+- Office = مكتب
+- Restaurant = مطعم
+- Clinic = عيادة
+- Retail Store = محل تجاري
+- Other = أخرى
+
+Design style options:
+- Modern
+- Classic
+- Neoclassical
+- Minimal
+- Japandi
+- Industrial
+- Contemporary
+- Luxury
+
+Arabic design style labels:
+- Modern = مودرن
+- Classic = كلاسيك
+- Neoclassical = نيو كلاسيك
+- Minimal = مينيمال
+- Japandi = جاباندي
+- Industrial = إندستريال
+- Contemporary = معاصر
+- Luxury = فاخر
+
+Scope type options:
+- Design Only
+- Design + Shop Drawings
+- Design + Supervision
+- Design + Execution
+- Turnkey
+
+Arabic scope labels:
+- Design Only = تصميم فقط
+- Design + Shop Drawings = تصميم + لوحات تنفيذية
+- Design + Supervision = تصميم + إشراف
+- Design + Execution = تصميم + تنفيذ
+- Turnkey = تسليم مفتاح
+
+Project status options:
+- New Lead
+- Quotation Sent
+- Contract Signed
+- Site Survey
+- 2D Planning
+- Mood Board
+- 3D Design
+- Client Review
+- Shop Drawings
+- BOQ
+- Execution Ready
+- Completed
+- Cancelled
+
+Arabic project status labels:
+- New Lead = عميل جديد
+- Quotation Sent = تم إرسال عرض السعر
+- Contract Signed = تم التعاقد
+- Site Survey = المعاينة ورفع المقاسات
+- 2D Planning = رسم 2D
+- Mood Board = Mood Board
+- 3D Design = تصميم 3D
+- Client Review = مراجعة العميل
+- Shop Drawings = Shop Drawings
+- BOQ = المقايسة
+- Execution Ready = جاهز للتنفيذ
+- Completed = مكتمل
+- Cancelled = ملغي
+
+Default workflow stages:
+When creating a new project, automatically create these stages:
+
+1. Contract
+Arabic: التعاقد
+Requires client approval: false
+
+2. Site Survey
+Arabic: المعاينة ورفع المقاسات
+Requires client approval: false
+
+3. 2D Plan
+Arabic: رسم 2D Plan
+Requires client approval: true
+
+4. Mood Board
+Arabic: Mood Board
+Requires client approval: true
+
+5. 3D Design
+Arabic: تصميم 3D
+Requires client approval: true
+
+6. Client Approval
+Arabic: موافقة العميل
+Requires client approval: true
+
+7. Shop Drawings
+Arabic: Shop Drawings
+Requires client approval: false
+
+8. BOQ
+Arabic: المقايسة BOQ
+Requires client approval: true
+
+9. Payments
+Arabic: الدفعات
+Requires client approval: false
+
+10. Handover
+Arabic: التسليم النهائي
+Requires client approval: true
+
+Stage status options:
+- Locked
+- Not Started
+- In Progress
+- Waiting Client Approval
+- Revision Required
+- Approved
+- Completed
+
+Arabic stage status labels:
+- Locked = مغلقة
+- Not Started = لم تبدأ
+- In Progress = قيد التنفيذ
+- Waiting Client Approval = بانتظار موافقة العميل
+- Revision Required = مطلوب تعديل
+- Approved = معتمدة
+- Completed = مكتملة
+
+Stage-gate logic:
+- First stage starts as Not Started.
+- Later stages are visually locked until previous stage is Approved or Completed.
+- Admin can override and unlock/update any stage.
+- Project progress equals the percentage of stages that are Approved or Completed.
+- Show progress bar in project details.
+- Show locked stages clearly.
+
+Dashboard module:
+Create a dashboard with cards showing:
+- Total clients
+- Active projects
+- Projects waiting for client approval
+- Pending payments
+- Total quoted value
+- Total paid amount
+- Overdue project stages
+
+Arabic labels:
+- إجمالي العملاء
+- المشاريع النشطة
+- موافقات معلقة
+- دفعات مستحقة
+- إجمالي عروض الأسعار
+- إجمالي المدفوعات
+- مراحل متأخرة
+
+Also show:
+- Recent projects table
+- Pending approvals list
+- Upcoming payments list
+- Project progress overview
+- Status badges
+
+Clients module:
+Build full CRUD.
+
+Pages:
+- Clients list
+- Create client
+- Edit client
+- Client details
+- Client related projects
+
+Client fields in form:
+- الاسم
+- رقم الهاتف
+- البريد الإلكتروني
+- العنوان
+- مصدر العميل
+- ملاحظات
+
+Client source options:
+- Facebook = فيسبوك
+- Instagram = إنستجرام
+- Referral = ترشيح
+- Website = الموقع الإلكتروني
+- Walk-in = زيارة مباشرة
+- Other = أخرى
+
+Projects module:
+Build full CRUD.
+
+Pages:
+- Projects list
+- Create project
+- Edit project
+- Project details
+
+Project form fields:
+- اسم المشروع
+- العميل
+- نوع المشروع
+- الموقع
+- المساحة بالمتر
+- ستايل التصميم
+- نطاق العمل
+- الميزانية
+- الحالة
+- تاريخ البداية
+- تاريخ النهاية المتوقع
+- ملاحظات
+
+Project details page:
+Use tabs:
+- نظرة عامة
+- مراحل المشروع
+- عرض السعر
+- الملفات
+- الموافقات
+- المقايسة
+- الدفعات
+- التعليقات
+
+Project header should show:
+- Project name
+- Client name
+- Area
+- Design style
+- Scope type
+- Budget
+- Status
+- Progress percentage
+
+Quotation module:
+Create quotation inside each project.
+
+Calculation:
+designSubtotal = areaSqm * pricePerSqm
+finalTotal = designSubtotal + shopDrawingPrice + supervisionPrice - discount + tax
+
+Quotation fields:
+- المساحة بالمتر
+- سعر متر التصميم
+- إجمالي التصميم
+- تكلفة اللوحات التنفيذية
+- تكلفة الإشراف
+- الخصم
+- الضريبة
+- الإجمالي النهائي
+- الحالة
+
+Quotation status:
+- Draft = مسودة
+- Sent = تم الإرسال
+- Approved = معتمد
+- Rejected = مرفوض
+
+Features:
+- Create quotation
+- Edit quotation
+- Auto-calculate totals
+- Mark as sent
+- Mark as approved
+- Mark as rejected
+- Quotation preview page
+- Copy project area into quotation automatically
+- Show all amounts in EGP
+
+Workflow module:
+Create workflow page inside project details.
+
+UI:
+- Vertical timeline
+- Stage cards
+- Status badge
+- Assigned user
+- Due date
+- Notes
+- Action buttons
+
+Actions:
+- Start stage
+- Mark as completed
+- Request client approval
+- Mark as approved
+- Mark revision required
+- Admin unlock / override
+
+Client approval stages:
+When internal user requests approval:
+- Create Approval record
+- Stage status becomes Waiting Client Approval
+- Show approval in dashboard and client portal
+
+Approval module:
+Approval status:
+- Pending = بانتظار الرد
+- Approved = معتمد
+- Approved with Comments = معتمد مع ملاحظات
+- Revision Required = مطلوب تعديل
+- Rejected = مرفوض
+
+Features:
+- Internal team can request approval for a stage.
+- Client can approve.
+- Client can approve with comments.
+- Client can request revision.
+- Store date and time of response.
+- Store client comment.
+- If client approves, related stage status becomes Approved.
+- If client requests revision, related stage status becomes Revision Required.
+- Show pending approvals on dashboard.
+- Show approval history.
+
+Client approval page:
+- Approval request card
+- Related stage
+- Project name
+- Files attached to stage
+- Public comments
+- Client comment box
+- Button: اعتماد
+- Button: اعتماد مع ملاحظات
+- Button: طلب تعديل
+
+Comments and revisions:
+Create comments for projects, stages, and approvals.
+
+Features:
+- Internal users can create internal comments or public comments.
+- Clients only see public comments.
+- Clients can add public comments to their own projects.
+- Track revision number optionally.
+- Show comments as timeline.
+- Label internal comments clearly: ملاحظة داخلية
+- Label public comments clearly: تعليق ظاهر للعميل
+
+Files module:
+Create basic file upload system.
+
+For MVP:
+- Store uploaded files locally in public/uploads or a similar local folder.
+- Save file metadata in database.
+- Allow file download.
+
+File categories:
+- Contract = عقد
+- Site Survey = معاينة
+- 2D Plan = 2D Plan
+- Mood Board = Mood Board
+- 3D Render = 3D Render
+- Shop Drawing = Shop Drawing
+- BOQ = BOQ
+- Invoice = فاتورة
+- Other = أخرى
+
+Features:
+- Upload file to project
+- Optional stage association
+- File category
+- Version number
+- isPublic checkbox
+- Notes
+- Download link
+- Filter by category
+- Client portal only shows files where isPublic = true
+- Admin can delete files
+
+BOQ module:
+Create a basic Bill of Quantities module.
+
+BOQ item fields in UI:
+- البند
+- التصنيف
+- الوصف
+- الوحدة
+- الكمية
+- سعر الوحدة
+- الإجمالي
+- المورد
+- مرحلة التنفيذ
+- ملاحظات
+
+BOQ calculation:
+totalPrice = quantity * unitPrice
+
+BOQ categories:
+- Demolition = هدم وتكسير
+- Masonry = مباني ومحارة
+- Plumbing = سباكة
+- Electrical = كهرباء
+- HVAC = تكييف
+- Ceiling = أسقف
+- Flooring = أرضيات
+- Painting = دهانات
+- Carpentry = نجارة
+- Aluminum and Glass = ألوميتال وزجاج
+- Furniture = فرش
+- Kitchen = مطبخ
+- Bathroom = حمام
+- Accessories = إكسسوارات
+- Other = أخرى
+
+Units:
+- m2 = م²
+- linear meter = متر طولي
+- piece = قطعة
+- set = طقم
+- day = يوم
+- lump sum = مقطوعية
+
+Features:
+- Add BOQ item
+- Edit BOQ item
+- Delete BOQ item
+- Auto-calculate total price
+- Show total BOQ amount
+- Filter by category
+- Show BOQ summary by category
+- Show BOQ table inside project details
+- Create global BOQ overview page
+
+Payments module:
+Create payment milestones for each project.
+
+Payment fields:
+- اسم الدفعة
+- المبلغ
+- تاريخ الاستحقاق
+- تاريخ الدفع
+- الحالة
+- نوع الدفعة
+- ملاحظات
+
+Payment status:
+- Pending = معلقة
+- Paid = مدفوعة
+- Overdue = متأخرة
+- Cancelled = ملغاة
+
+Payment type:
+- Design Deposit = دفعة تعاقد التصميم
+- 2D Approval Payment = دفعة اعتماد 2D
+- Mood Board Payment = دفعة اعتماد Mood Board
+- 3D Approval Payment = دفعة اعتماد 3D
+- Shop Drawing Payment = دفعة اللوحات التنفيذية
+- BOQ Payment = دفعة المقايسة
+- Execution Payment = دفعة التنفيذ
+- Final Payment = الدفعة النهائية
+- Other = أخرى
+
+Features:
+- Add payment milestone
+- Edit payment
+- Mark as paid
+- Set paid date automatically when marked paid
+- Show total due
+- Show total paid
+- Show outstanding balance
+- Show overdue payments on dashboard
+- Create global payments page
+
+Client portal:
+Build a simple client-facing portal.
+
+Client can:
+- See only own projects
+- View project overview
+- View project progress
+- View workflow stages
+- View files marked as public
+- View approval requests
+- Approve or request revision
+- Add public comments
+- View payment milestones
+
+Client cannot:
+- See internal comments
+- See other clients
+- Edit BOQ
+- Edit project data
+- Edit quotation
+- Access admin dashboard
+- Access internal users
+
+Client portal pages:
+- Client dashboard
+- My projects
+- Project details
+- Approvals
+- Files
+- Payments
+- Comments
+
+Client portal Arabic labels:
+- مشاريعي
+- حالة المشروع
+- المرحلة الحالية
+- الموافقات المطلوبة
+- الملفات
+- الدفعات
+- التعليقات
+- اعتماد
+- طلب تعديل
+
+Role permissions:
+Implement simple permission checks.
+
+Admin:
+- Full access to everything
+
+Sales:
+- Clients full access
+- Projects create/read/update
+- Quotations create/read/update
+- Payments read
+- Dashboard read
+
+Designer:
+- Projects read/update
+- Workflow update
+- Files upload/read
+- Comments create/read
+- Approvals request/read
+
+Draftsman:
+- Projects read
+- Workflow read/update for Shop Drawings stages
+- Files upload/read
+- Comments create/read
+
+Quantity Surveyor:
+- Projects read
+- BOQ full access
+- Files read/upload
+- Comments create/read
+
+Accountant:
+- Projects read
+- Quotations read
+- Payments full access
+- Dashboard finance cards read
+
+Client:
+- Own projects only
+- Own approvals only
+- Public files only
+- Public comments only
+- Payment view only
+
+Settings/users page:
+Create a basic settings page for Admin.
+
+Features:
+- List users
+- Show role
+- Show email
+- Create user
+- Edit user role
+- Reset password basic action or simple edit password
+- Do not overcomplicate
+
+Seed data:
+Create seed script with:
+- Default workspace name: EMARA | عمارة
+- Demo users
+- 3 demo clients
+- 3 demo projects
+- Workflow stages for each project
+- Example quotation
+- Example BOQ items
+- Example payments
+- Example approval requests
+- Example comments
+- Link client@demo.com to one demo client
+
+Demo projects:
+1. Villa New Cairo
+Arabic display: فيلا التجمع
+Type: Villa
+Area: 420
+Style: Luxury
+Scope: Turnkey
+
+2. Apartment Zayed
+Arabic display: شقة الشيخ زايد
+Type: Apartment
+Area: 180
+Style: Modern
+Scope: Design + Shop Drawings
+
+3. Clinic Maadi
+Arabic display: عيادة المعادي
+Type: Clinic
+Area: 120
+Style: Minimal
+Scope: Design + Execution
+
+Important business logic:
+- When creating a new project, automatically create the default workflow stages.
+- When creating quotation, copy project area into quotation.
+- Calculate quotation totals automatically.
+- Calculate BOQ totals automatically.
+- Calculate payment totals automatically.
+- Dashboard numbers must come from database.
+- Project progress must come from workflow stages.
+- Approval response must update related stage status.
+- Client request revision must update stage status to Revision Required.
+- Client approval must update stage status to Approved.
+- Client must only see own project data.
+- Internal comments must never appear in client portal.
+- Public files only appear in client portal.
+
+Pages to build:
+
+Public:
+- /login
+
+Internal:
+- /dashboard
+- /clients
+- /clients/new
+- /clients/[id]
+- /clients/[id]/edit
+- /projects
+- /projects/new
+- /projects/[id]
+- /projects/[id]/edit
+- /approvals
+- /payments
+- /boq
+- /files
+- /settings/users
+
+Client:
+- /client
+- /client/projects
+- /client/projects/[id]
+- /client/approvals
+- /client/files
+- /client/payments
+- /client/comments
+
+Project detail tabs:
+Inside /projects/[id], create tabs:
+- Overview = نظرة عامة
+- Workflow = مراحل المشروع
+- Quotation = عرض السعر
+- Files = الملفات
+- Approvals = الموافقات
+- BOQ = المقايسة
+- Payments = الدفعات
+- Comments = التعليقات
+
+UI components:
+Use reusable components for:
+- App sidebar
+- Top bar
+- Stat card
+- Status badge
+- Data table
+- Form field
+- Project progress bar
+- Workflow timeline
+- File card
+- Approval card
+- BOQ summary card
+- Payment summary card
+- Empty state
+- Loading state
+
+Arabic UI polish:
+- Set html dir="rtl" and lang="ar"
+- Make sidebar appear on the right
+- Align Arabic text correctly
+- Use clear spacing
+- Use readable Arabic typography
+- Keep English technical terms like 2D Plan, 3D, Mood Board, Shop Drawings, BOQ where appropriate
+
+Acceptance criteria:
+The MVP is complete only when:
+
+1. I can login as Admin using admin@emara.com / password123.
+2. I can login as Client using client@demo.com / password123.
+3. Admin can create a client.
+4. Admin can create a project for that client.
+5. New project automatically gets workflow stages.
+6. Admin can create a quotation using area and price per square meter.
+7. Quotation totals calculate correctly.
+8. Admin or Designer can upload files to a project.
+9. Admin or Designer can request client approval for a stage.
+10. Client can see the approval request in client portal.
+11. Client can approve or request revision.
+12. Approval updates related stage status.
+13. Internal users can add comments.
+14. Client only sees public comments.
+15. Admin or Quantity Surveyor can add BOQ items.
+16. BOQ total calculates correctly.
+17. Accountant can add payment milestones.
+18. Accountant can mark payment as paid.
+19. Payment totals update correctly.
+20. Dashboard numbers update from database data.
+21. Client only sees own project data.
+22. Arabic RTL layout works correctly.
+23. The brand name EMARA | عمارة appears consistently.
+24. No placeholder buttons remain.
+25. The app runs successfully in Replit.
+
+Development order:
+Build in this order:
+
+1. Project setup
+2. Prisma schema
+3. Seed script
+4. Authentication
+5. Layout and RTL dashboard shell
+6. Role permissions
+7. Dashboard
+8. Clients CRUD
+9. Projects CRUD
+10. Auto workflow stages
+11. Project detail tabs
+12. Quotation module
+13. File upload module
+14. Approval module
+15. Comments module
+16. BOQ module
+17. Payments module
+18. Client portal
+19. Settings/users page
+20. Final testing and polish
+
+README:
+Create a clear README with:
+- App name: EMARA | عمارة
+- Description
+- Tech stack
+- Setup commands
+- Prisma migration command
+- Seed command
+- Run command
+- Demo login credentials
+- Notes about MVP scope
+
+Final instruction:
+Build the complete working MVP. Keep it simple, stable, and demo-ready. Do not add extra complex features. Focus on making EMARA | عمارة usable as a real SaaS MVP for interior architecture and fit-out project management.

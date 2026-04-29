@@ -3,34 +3,1400 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: EMARA API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: auth
+  - name: users
+  - name: clients
+  - name: projects
+  - name: stages
+  - name: quotations
+  - name: files
+  - name: approvals
+  - name: comments
+  - name: boq
+  - name: payments
+  - name: dashboard
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
           content:
             application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginBody" }
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthUser" }
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Ok" }
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthUser" }
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      responses:
+        "200":
+          description: List users
+          content:
+            application/json:
               schema:
-                $ref: "#/components/schemas/HealthStatus"
+                type: array
+                items: { $ref: "#/components/schemas/User" }
+    post:
+      operationId: createUser
+      tags: [users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateUserBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+  /users/{id}:
+    patch:
+      operationId: updateUser
+      tags: [users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateUserBody" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted }
+
+  /clients:
+    get:
+      operationId: listClients
+      tags: [clients]
+      responses:
+        "200":
+          description: List clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Client" }
+    post:
+      operationId: createClient
+      tags: [clients]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateClientBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Client" }
+  /clients/{id}:
+    get:
+      operationId: getClient
+      tags: [clients]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Client
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Client" }
+    patch:
+      operationId: updateClient
+      tags: [clients]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateClientBody" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Client" }
+    delete:
+      operationId: deleteClient
+      tags: [clients]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted }
+
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      responses:
+        "200":
+          description: List projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ProjectWithClient" }
+    post:
+      operationId: createProject
+      tags: [projects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateProjectBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Project details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectDetail" }
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateProjectBody" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted }
+
+  /projects/{projectId}/stages:
+    get:
+      operationId: listProjectStages
+      tags: [stages]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Stages
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ProjectStage" }
+  /stages/{id}:
+    patch:
+      operationId: updateStage
+      tags: [stages]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateStageBody" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProjectStage" }
+
+  /projects/{projectId}/quotation:
+    get:
+      operationId: getProjectQuotation
+      tags: [quotations]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Quotation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/QuotationOrNull" }
+    put:
+      operationId: upsertProjectQuotation
+      tags: [quotations]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpsertQuotationBody" }
+      responses:
+        "200":
+          description: Quotation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Quotation" }
+  /quotations/{id}/status:
+    patch:
+      operationId: updateQuotationStatus
+      tags: [quotations]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateQuotationStatusBody" }
+      responses:
+        "200":
+          description: Quotation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Quotation" }
+
+  /projects/{projectId}/files:
+    get:
+      operationId: listProjectFiles
+      tags: [files]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Files
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/FileAsset" }
+    post:
+      operationId: createProjectFile
+      tags: [files]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateFileBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FileAsset" }
+  /files:
+    get:
+      operationId: listAllFiles
+      tags: [files]
+      responses:
+        "200":
+          description: All files
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/FileAsset" }
+  /files/{id}:
+    delete:
+      operationId: deleteFile
+      tags: [files]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted }
+
+  /projects/{projectId}/approvals:
+    get:
+      operationId: listProjectApprovals
+      tags: [approvals]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Approvals
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ApprovalDetail" }
+    post:
+      operationId: requestApproval
+      tags: [approvals]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RequestApprovalBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApprovalDetail" }
+  /approvals:
+    get:
+      operationId: listApprovals
+      tags: [approvals]
+      responses:
+        "200":
+          description: All approvals
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ApprovalDetail" }
+  /approvals/{id}/respond:
+    post:
+      operationId: respondToApproval
+      tags: [approvals]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RespondApprovalBody" }
+      responses:
+        "200":
+          description: Responded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApprovalDetail" }
+
+  /projects/{projectId}/comments:
+    get:
+      operationId: listProjectComments
+      tags: [comments]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CommentWithUser" }
+    post:
+      operationId: createProjectComment
+      tags: [comments]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCommentBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CommentWithUser" }
+
+  /projects/{projectId}/boq:
+    get:
+      operationId: listProjectBoq
+      tags: [boq]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: BOQ items
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BoqItem" }
+    post:
+      operationId: createBoqItem
+      tags: [boq]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateBoqItemBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BoqItem" }
+  /boq:
+    get:
+      operationId: listAllBoq
+      tags: [boq]
+      responses:
+        "200":
+          description: All BOQ items with project info
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BoqItemWithProject" }
+  /boq-items/{id}:
+    patch:
+      operationId: updateBoqItem
+      tags: [boq]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateBoqItemBody" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BoqItem" }
+    delete:
+      operationId: deleteBoqItem
+      tags: [boq]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted }
+
+  /projects/{projectId}/payments:
+    get:
+      operationId: listProjectPayments
+      tags: [payments]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Payment" }
+    post:
+      operationId: createPayment
+      tags: [payments]
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreatePaymentBody" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Payment" }
+  /payments:
+    get:
+      operationId: listAllPayments
+      tags: [payments]
+      responses:
+        "200":
+          description: All payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PaymentWithProject" }
+  /payments/{id}:
+    patch:
+      operationId: updatePayment
+      tags: [payments]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdatePaymentBody" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Payment" }
+    delete:
+      operationId: deletePayment
+      tags: [payments]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Deleted }
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardStats" }
+  /dashboard/recent-projects:
+    get:
+      operationId: getRecentProjects
+      tags: [dashboard]
+      responses:
+        "200":
+          description: Recent
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ProjectWithClient" }
+  /dashboard/pending-approvals:
+    get:
+      operationId: getPendingApprovals
+      tags: [dashboard]
+      responses:
+        "200":
+          description: Pending
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ApprovalDetail" }
+  /dashboard/upcoming-payments:
+    get:
+      operationId: getUpcomingPayments
+      tags: [dashboard]
+      responses:
+        "200":
+          description: Upcoming
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PaymentWithProject" }
+  /dashboard/overdue-stages:
+    get:
+      operationId: getOverdueStages
+      tags: [dashboard]
+      responses:
+        "200":
+          description: Overdue stages
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/StageWithProject" }
+
 components:
   schemas:
     HealthStatus:
       type: object
       properties:
-        status:
-          type: string
-      required:
-        - status
+        status: { type: string }
+      required: [status]
 
+    Ok:
+      type: object
+      properties:
+        ok: { type: boolean }
+      required: [ok]
+
+    Role:
+      type: string
+      enum: [admin, sales, designer, draftsman, qs, accountant, client]
+
+    AuthUser:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        clientId: { type: ["integer", "null"] }
+      required: [id, name, email, role, clientId]
+
+    LoginBody:
+      type: object
+      properties:
+        email: { type: string }
+        password: { type: string }
+      required: [email, password]
+
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        clientId: { type: ["integer", "null"] }
+        createdAt: { type: string, format: date-time }
+      required: [id, name, email, role, clientId, createdAt]
+
+    CreateUserBody:
+      type: object
+      properties:
+        name: { type: string }
+        email: { type: string }
+        password: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        clientId: { type: ["integer", "null"] }
+      required: [name, email, password, role]
+
+    UpdateUserBody:
+      type: object
+      properties:
+        name: { type: string }
+        email: { type: string }
+        password: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        clientId: { type: ["integer", "null"] }
+
+    Client:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        phone: { type: ["string", "null"] }
+        email: { type: ["string", "null"] }
+        address: { type: ["string", "null"] }
+        source: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+      required: [id, name, phone, email, address, source, notes, createdAt]
+
+    CreateClientBody:
+      type: object
+      properties:
+        name: { type: string }
+        phone: { type: ["string", "null"] }
+        email: { type: ["string", "null"] }
+        address: { type: ["string", "null"] }
+        source: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+      required: [name]
+
+    UpdateClientBody:
+      type: object
+      properties:
+        name: { type: string }
+        phone: { type: ["string", "null"] }
+        email: { type: ["string", "null"] }
+        address: { type: ["string", "null"] }
+        source: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+
+    ProjectStatus:
+      type: string
+      enum:
+        - new_lead
+        - quotation_sent
+        - contract_signed
+        - site_survey
+        - planning_2d
+        - mood_board
+        - design_3d
+        - client_review
+        - shop_drawings
+        - boq
+        - execution_ready
+        - completed
+        - cancelled
+
+    ProjectType:
+      type: string
+      enum: [apartment, villa, office, restaurant, clinic, retail_store, other]
+
+    DesignStyle:
+      type: string
+      enum: [modern, classic, neoclassical, minimal, japandi, industrial, contemporary, luxury]
+
+    ScopeType:
+      type: string
+      enum: [design_only, design_shop_drawings, design_supervision, design_execution, turnkey]
+
+    Project:
+      type: object
+      properties:
+        id: { type: integer }
+        clientId: { type: integer }
+        projectName: { type: string }
+        projectType: { $ref: "#/components/schemas/ProjectType" }
+        location: { type: ["string", "null"] }
+        areaSqm: { type: number }
+        designStyle: { $ref: "#/components/schemas/DesignStyle" }
+        scopeType: { $ref: "#/components/schemas/ScopeType" }
+        budget: { type: ["number", "null"] }
+        status: { $ref: "#/components/schemas/ProjectStatus" }
+        startDate: { type: ["string", "null"], format: date }
+        expectedEndDate: { type: ["string", "null"], format: date }
+        notes: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+      required:
+        - id
+        - clientId
+        - projectName
+        - projectType
+        - location
+        - areaSqm
+        - designStyle
+        - scopeType
+        - budget
+        - status
+        - startDate
+        - expectedEndDate
+        - notes
+        - createdAt
+
+    ProjectWithClient:
+      allOf:
+        - $ref: "#/components/schemas/Project"
+        - type: object
+          properties:
+            clientName: { type: string }
+            progressPercent: { type: integer }
+          required: [clientName, progressPercent]
+
+    ProjectDetail:
+      allOf:
+        - $ref: "#/components/schemas/Project"
+        - type: object
+          properties:
+            clientName: { type: string }
+            progressPercent: { type: integer }
+            stagesTotal: { type: integer }
+            stagesCompleted: { type: integer }
+          required: [clientName, progressPercent, stagesTotal, stagesCompleted]
+
+    CreateProjectBody:
+      type: object
+      properties:
+        clientId: { type: integer }
+        projectName: { type: string }
+        projectType: { $ref: "#/components/schemas/ProjectType" }
+        location: { type: ["string", "null"] }
+        areaSqm: { type: number }
+        designStyle: { $ref: "#/components/schemas/DesignStyle" }
+        scopeType: { $ref: "#/components/schemas/ScopeType" }
+        budget: { type: ["number", "null"] }
+        status: { $ref: "#/components/schemas/ProjectStatus" }
+        startDate: { type: ["string", "null"], format: date }
+        expectedEndDate: { type: ["string", "null"], format: date }
+        notes: { type: ["string", "null"] }
+      required: [clientId, projectName, projectType, areaSqm, designStyle, scopeType, status]
+
+    UpdateProjectBody:
+      type: object
+      properties:
+        clientId: { type: integer }
+        projectName: { type: string }
+        projectType: { $ref: "#/components/schemas/ProjectType" }
+        location: { type: ["string", "null"] }
+        areaSqm: { type: number }
+        designStyle: { $ref: "#/components/schemas/DesignStyle" }
+        scopeType: { $ref: "#/components/schemas/ScopeType" }
+        budget: { type: ["number", "null"] }
+        status: { $ref: "#/components/schemas/ProjectStatus" }
+        startDate: { type: ["string", "null"], format: date }
+        expectedEndDate: { type: ["string", "null"], format: date }
+        notes: { type: ["string", "null"] }
+
+    StageStatus:
+      type: string
+      enum:
+        - locked
+        - not_started
+        - in_progress
+        - waiting_client_approval
+        - revision_required
+        - approved
+        - completed
+
+    ProjectStage:
+      type: object
+      properties:
+        id: { type: integer }
+        projectId: { type: integer }
+        stageName: { type: string }
+        stageKey: { type: string }
+        order: { type: integer }
+        status: { $ref: "#/components/schemas/StageStatus" }
+        assignedToId: { type: ["integer", "null"] }
+        assignedToName: { type: ["string", "null"] }
+        startDate: { type: ["string", "null"], format: date }
+        dueDate: { type: ["string", "null"], format: date }
+        completedAt: { type: ["string", "null"], format: date-time }
+        requiresClientApproval: { type: boolean }
+        notes: { type: ["string", "null"] }
+      required:
+        - id
+        - projectId
+        - stageName
+        - stageKey
+        - order
+        - status
+        - assignedToId
+        - assignedToName
+        - startDate
+        - dueDate
+        - completedAt
+        - requiresClientApproval
+        - notes
+
+    StageWithProject:
+      allOf:
+        - $ref: "#/components/schemas/ProjectStage"
+        - type: object
+          properties:
+            projectName: { type: string }
+            clientName: { type: string }
+          required: [projectName, clientName]
+
+    UpdateStageBody:
+      type: object
+      properties:
+        status: { $ref: "#/components/schemas/StageStatus" }
+        assignedToId: { type: ["integer", "null"] }
+        startDate: { type: ["string", "null"], format: date }
+        dueDate: { type: ["string", "null"], format: date }
+        notes: { type: ["string", "null"] }
+
+    QuotationStatus:
+      type: string
+      enum: [draft, sent, approved, rejected]
+
+    Quotation:
+      type: object
+      properties:
+        id: { type: integer }
+        projectId: { type: integer }
+        areaSqm: { type: number }
+        pricePerSqm: { type: number }
+        designSubtotal: { type: number }
+        shopDrawingPrice: { type: number }
+        supervisionPrice: { type: number }
+        discount: { type: number }
+        tax: { type: number }
+        finalTotal: { type: number }
+        status: { $ref: "#/components/schemas/QuotationStatus" }
+        createdAt: { type: string, format: date-time }
+      required:
+        - id
+        - projectId
+        - areaSqm
+        - pricePerSqm
+        - designSubtotal
+        - shopDrawingPrice
+        - supervisionPrice
+        - discount
+        - tax
+        - finalTotal
+        - status
+        - createdAt
+
+    QuotationOrNull:
+      oneOf:
+        - $ref: "#/components/schemas/Quotation"
+        - type: "null"
+
+    UpsertQuotationBody:
+      type: object
+      properties:
+        areaSqm: { type: number }
+        pricePerSqm: { type: number }
+        shopDrawingPrice: { type: number }
+        supervisionPrice: { type: number }
+        discount: { type: number }
+        tax: { type: number }
+      required: [areaSqm, pricePerSqm, shopDrawingPrice, supervisionPrice, discount, tax]
+
+    UpdateQuotationStatusBody:
+      type: object
+      properties:
+        status: { $ref: "#/components/schemas/QuotationStatus" }
+      required: [status]
+
+    FileCategory:
+      type: string
+      enum:
+        - contract
+        - site_survey
+        - plan_2d
+        - mood_board
+        - render_3d
+        - shop_drawing
+        - boq
+        - invoice
+        - other
+
+    FileAsset:
+      type: object
+      properties:
+        id: { type: integer }
+        projectId: { type: integer }
+        projectName: { type: ["string", "null"] }
+        stageId: { type: ["integer", "null"] }
+        uploadedById: { type: integer }
+        uploadedByName: { type: ["string", "null"] }
+        fileName: { type: string }
+        fileUrl: { type: string }
+        fileType: { type: ["string", "null"] }
+        category: { $ref: "#/components/schemas/FileCategory" }
+        version: { type: integer }
+        isPublic: { type: boolean }
+        notes: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+      required:
+        - id
+        - projectId
+        - projectName
+        - stageId
+        - uploadedById
+        - uploadedByName
+        - fileName
+        - fileUrl
+        - fileType
+        - category
+        - version
+        - isPublic
+        - notes
+        - createdAt
+
+    CreateFileBody:
+      type: object
+      properties:
+        stageId: { type: ["integer", "null"] }
+        fileName: { type: string }
+        fileUrl: { type: string }
+        fileType: { type: ["string", "null"] }
+        category: { $ref: "#/components/schemas/FileCategory" }
+        version: { type: integer }
+        isPublic: { type: boolean }
+        notes: { type: ["string", "null"] }
+      required: [fileName, fileUrl, category, version, isPublic]
+
+    ApprovalStatus:
+      type: string
+      enum: [pending, approved, approved_with_comments, revision_required, rejected]
+
+    ApprovalDetail:
+      type: object
+      properties:
+        id: { type: integer }
+        projectId: { type: integer }
+        projectName: { type: string }
+        clientName: { type: string }
+        stageId: { type: integer }
+        stageName: { type: string }
+        requestedById: { type: integer }
+        requestedByName: { type: string }
+        approvedById: { type: ["integer", "null"] }
+        status: { $ref: "#/components/schemas/ApprovalStatus" }
+        clientComment: { type: ["string", "null"] }
+        internalComment: { type: ["string", "null"] }
+        requestedAt: { type: string, format: date-time }
+        respondedAt: { type: ["string", "null"], format: date-time }
+      required:
+        - id
+        - projectId
+        - projectName
+        - clientName
+        - stageId
+        - stageName
+        - requestedById
+        - requestedByName
+        - approvedById
+        - status
+        - clientComment
+        - internalComment
+        - requestedAt
+        - respondedAt
+
+    RequestApprovalBody:
+      type: object
+      properties:
+        stageId: { type: integer }
+        internalComment: { type: ["string", "null"] }
+      required: [stageId]
+
+    RespondApprovalBody:
+      type: object
+      properties:
+        status: { $ref: "#/components/schemas/ApprovalStatus" }
+        clientComment: { type: ["string", "null"] }
+      required: [status]
+
+    CommentWithUser:
+      type: object
+      properties:
+        id: { type: integer }
+        projectId: { type: integer }
+        stageId: { type: ["integer", "null"] }
+        approvalId: { type: ["integer", "null"] }
+        userId: { type: integer }
+        userName: { type: string }
+        userRole: { $ref: "#/components/schemas/Role" }
+        commentText: { type: string }
+        isInternal: { type: boolean }
+        revisionNumber: { type: ["integer", "null"] }
+        createdAt: { type: string, format: date-time }
+      required:
+        - id
+        - projectId
+        - stageId
+        - approvalId
+        - userId
+        - userName
+        - userRole
+        - commentText
+        - isInternal
+        - revisionNumber
+        - createdAt
+
+    CreateCommentBody:
+      type: object
+      properties:
+        stageId: { type: ["integer", "null"] }
+        approvalId: { type: ["integer", "null"] }
+        commentText: { type: string }
+        isInternal: { type: boolean }
+      required: [commentText, isInternal]
+
+    BoqCategory:
+      type: string
+      enum:
+        - demolition
+        - masonry
+        - plumbing
+        - electrical
+        - hvac
+        - ceiling
+        - flooring
+        - painting
+        - carpentry
+        - aluminum_glass
+        - furniture
+        - kitchen
+        - bathroom
+        - accessories
+        - other
+
+    BoqUnit:
+      type: string
+      enum: [m2, linear_meter, piece, set, day, lump_sum]
+
+    BoqItem:
+      type: object
+      properties:
+        id: { type: integer }
+        projectId: { type: integer }
+        category: { $ref: "#/components/schemas/BoqCategory" }
+        itemName: { type: string }
+        description: { type: ["string", "null"] }
+        unit: { $ref: "#/components/schemas/BoqUnit" }
+        quantity: { type: number }
+        unitPrice: { type: number }
+        totalPrice: { type: number }
+        supplierName: { type: ["string", "null"] }
+        executionStage: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+      required:
+        - id
+        - projectId
+        - category
+        - itemName
+        - description
+        - unit
+        - quantity
+        - unitPrice
+        - totalPrice
+        - supplierName
+        - executionStage
+        - notes
+        - createdAt
+
+    BoqItemWithProject:
+      allOf:
+        - $ref: "#/components/schemas/BoqItem"
+        - type: object
+          properties:
+            projectName: { type: string }
+            clientName: { type: string }
+          required: [projectName, clientName]
+
+    CreateBoqItemBody:
+      type: object
+      properties:
+        category: { $ref: "#/components/schemas/BoqCategory" }
+        itemName: { type: string }
+        description: { type: ["string", "null"] }
+        unit: { $ref: "#/components/schemas/BoqUnit" }
+        quantity: { type: number }
+        unitPrice: { type: number }
+        supplierName: { type: ["string", "null"] }
+        executionStage: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+      required: [category, itemName, unit, quantity, unitPrice]
+
+    UpdateBoqItemBody:
+      type: object
+      properties:
+        category: { $ref: "#/components/schemas/BoqCategory" }
+        itemName: { type: string }
+        description: { type: ["string", "null"] }
+        unit: { $ref: "#/components/schemas/BoqUnit" }
+        quantity: { type: number }
+        unitPrice: { type: number }
+        supplierName: { type: ["string", "null"] }
+        executionStage: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+
+    PaymentStatus:
+      type: string
+      enum: [pending, paid, overdue, cancelled]
+
+    PaymentType:
+      type: string
+      enum:
+        - design_deposit
+        - approval_2d
+        - approval_mood
+        - approval_3d
+        - shop_drawing
+        - boq
+        - execution
+        - final
+        - other
+
+    Payment:
+      type: object
+      properties:
+        id: { type: integer }
+        projectId: { type: integer }
+        title: { type: string }
+        amount: { type: number }
+        dueDate: { type: ["string", "null"], format: date }
+        paidDate: { type: ["string", "null"], format: date }
+        status: { $ref: "#/components/schemas/PaymentStatus" }
+        paymentType: { $ref: "#/components/schemas/PaymentType" }
+        notes: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+      required:
+        - id
+        - projectId
+        - title
+        - amount
+        - dueDate
+        - paidDate
+        - status
+        - paymentType
+        - notes
+        - createdAt
+
+    PaymentWithProject:
+      allOf:
+        - $ref: "#/components/schemas/Payment"
+        - type: object
+          properties:
+            projectName: { type: string }
+            clientName: { type: string }
+          required: [projectName, clientName]
+
+    CreatePaymentBody:
+      type: object
+      properties:
+        title: { type: string }
+        amount: { type: number }
+        dueDate: { type: ["string", "null"], format: date }
+        paymentType: { $ref: "#/components/schemas/PaymentType" }
+        notes: { type: ["string", "null"] }
+      required: [title, amount, paymentType]
+
+    UpdatePaymentBody:
+      type: object
+      properties:
+        title: { type: string }
+        amount: { type: number }
+        dueDate: { type: ["string", "null"], format: date }
+        paidDate: { type: ["string", "null"], format: date }
+        status: { $ref: "#/components/schemas/PaymentStatus" }
+        paymentType: { $ref: "#/components/schemas/PaymentType" }
+        notes: { type: ["string", "null"] }
+
+    DashboardStats:
+      type: object
+      properties:
+        totalClients: { type: integer }
+        activeProjects: { type: integer }
+        pendingApprovals: { type: integer }
+        pendingPayments: { type: integer }
+        totalQuoted: { type: number }
+        totalPaid: { type: number }
+        overdueStages: { type: integer }
+      required:
+        - totalClients
+        - activeProjects
+        - pendingApprovals
+        - pendingPayments
+        - totalQuoted
+        - totalPaid
+        - overdueStages
