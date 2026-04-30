@@ -11,7 +11,7 @@ import { hashPassword, requireAuth, requireRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.get("/users", requireAuth, async (_req, res): Promise<void> => {
+router.get("/users", requireAuth, requireRole("admin"), async (_req, res): Promise<void> => {
   const rows = await db
     .select({
       id: usersTable.id,

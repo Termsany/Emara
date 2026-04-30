@@ -8,16 +8,18 @@ import {
   UpdateClientParams,
   DeleteClientParams,
 } from "@workspace/api-zod";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, requireRole } from "../lib/auth";
 
 const router: IRouter = Router();
+const staffOnly = requireRole("admin", "sales", "designer", "draftsman", "qs", "accountant");
+const adminSales = requireRole("admin", "sales");
 
-router.get("/clients", requireAuth, async (_req, res): Promise<void> => {
+router.get("/clients", requireAuth, staffOnly, async (_req, res): Promise<void> => {
   const rows = await db.select().from(clientsTable).orderBy(clientsTable.id);
   res.json(rows);
 });
 
-router.post("/clients", requireAuth, async (req, res): Promise<void> => {
+router.post("/clients", requireAuth, adminSales, async (req, res): Promise<void> => {
   const parsed = CreateClientBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -37,7 +39,7 @@ router.post("/clients", requireAuth, async (req, res): Promise<void> => {
   res.status(201).json(row);
 });
 
-router.get("/clients/:id", requireAuth, async (req, res): Promise<void> => {
+router.get("/clients/:id", requireAuth, staffOnly, async (req, res): Promise<void> => {
   const params = GetClientParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -55,7 +57,7 @@ router.get("/clients/:id", requireAuth, async (req, res): Promise<void> => {
   res.json(row);
 });
 
-router.patch("/clients/:id", requireAuth, async (req, res): Promise<void> => {
+router.patch("/clients/:id", requireAuth, adminSales, async (req, res): Promise<void> => {
   const params = UpdateClientParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -78,7 +80,7 @@ router.patch("/clients/:id", requireAuth, async (req, res): Promise<void> => {
   res.json(row);
 });
 
-router.delete("/clients/:id", requireAuth, async (req, res): Promise<void> => {
+router.delete("/clients/:id", requireAuth, requireRole("admin"), async (req, res): Promise<void> => {
   const params = DeleteClientParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

@@ -1,6 +1,17 @@
 import { Router, type IRouter } from "express";
 import { alias } from "drizzle-orm/pg-core";
-import { and, asc, desc, eq, lt, ne, notInArray, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  lt,
+  ne,
+  notInArray,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import {
   db,
   approvalsTable,
@@ -13,39 +24,97 @@ import {
   usersTable,
 } from "@workspace/db";
 import { requireAuth } from "../lib/auth";
+import { isClient } from "../lib/authz";
 
 const router: IRouter = Router();
+
+async function getClientProjectIds(clientId: number): Promise<number[]> {
+  const rows = await db
+    .select({ id: projectsTable.id })
+    .from(projectsTable)
+    .where(eq(projectsTable.clientId, clientId));
+  return rows.map((r) => r.id);
+}
 
 router.get(
   "/dashboard/stats",
   requireAuth,
-  async (_req, res): Promise<void> => {
+  async (req, res): Promise<void> => {
+    const clientScope =
+      isClient(req.user) && req.user!.clientId != null
+        ? req.user!.clientId
+        : null;
+    const projectIds =
+      clientScope != null ? await getClientProjectIds(clientScope) : null;
+
+    if (projectIds && projectIds.length === 0) {
+      res.json({
+        totalClients: 0,
+        activeProjects: 0,
+        pendingApprovals: 0,
+        pendingPayments: 0,
+        totalQuoted: 0,
+        totalPaid: 0,
+        overdueStages: 0,
+      });
+      return;
+    }
+
+    const projectFilter = projectIds
+      ? inArray(projectsTable.id, projectIds)
+      : undefined;
+    const stageProjectFilter = projectIds
+      ? inArray(projectStagesTable.projectId, projectIds)
+      : undefined;
+    const approvalProjectFilter = projectIds
+      ? inArray(approvalsTable.projectId, projectIds)
+      : undefined;
+    const paymentProjectFilter = projectIds
+      ? inArray(paymentsTable.projectId, projectIds)
+      : undefined;
+    const quotationProjectFilter = projectIds
+      ? inArray(quotationsTable.projectId, projectIds)
+      : undefined;
+
     const [{ count: totalClients }] = await db
       .select({ count: sql<number>`cast(count(*) as int)` })
-      .from(clientsTable);
+      .from(clientsTable)
+      .where(clientScope != null ? eq(clientsTable.id, clientScope) : (sql`true` as SQL));
+
     const [{ count: activeProjects }] = await db
       .select({ count: sql<number>`cast(count(*) as int)` })
       .from(projectsTable)
-      .where(notInArray(projectsTable.status, ["completed", "cancelled"]));
+      .where(
+        and(
+          notInArray(projectsTable.status, ["completed", "cancelled"]),
+          projectFilter,
+        ),
+      );
+
     const [{ count: pendingApprovals }] = await db
       .select({ count: sql<number>`cast(count(*) as int)` })
       .from(approvalsTable)
-      .where(eq(approvalsTable.status, "pending"));
+      .where(and(eq(approvalsTable.status, "pending"), approvalProjectFilter));
+
     const [{ count: pendingPayments }] = await db
       .select({ count: sql<number>`cast(count(*) as int)` })
       .from(paymentsTable)
-      .where(eq(paymentsTable.status, "pending"));
+      .where(and(eq(paymentsTable.status, "pending"), paymentProjectFilter));
+
     const [{ sum: totalQuoted }] = await db
       .select({
         sum: sql<number>`cast(coalesce(sum(${quotationsTable.finalTotal}), 0) as float8)`,
       })
-      .from(quotationsTable);
+      .from(quotationsTable)
+      .where(quotationProjectFilter);
+
     const [{ sum: totalPaid }] = await db
       .select({
         sum: sql<number>`cast(coalesce(sum(${paymentsTable.amount}), 0) as float8)`,
       })
       .from(paymentsTable)
-      .where(eq(paymentsTable.status, "paid"));
+      .where(and(eq(paymentsTable.status, "paid"), paymentProjectFilter));
+
     const now = new Date();
     const [{ count: overdueStages }] = await db
       .select({ count: sql<number>`cast(count(*) as int)` })
@@ -55,8 +124,10 @@ router.get(
           lt(projectStagesTable.dueDate, now),
           ne(projectStagesTable.status, "completed"),
           ne(projectStagesTable.status, "approved"),
+          stageProjectFilter,
         ),
       );
+
     res.json({
       totalClients,
       activeProjects,
@@ -72,8 +143,12 @@ router.get(
 router.get(
   "/dashboard/recent-projects",
   requireAuth,
-  async (_req, res): Promise<void> => {
-    const rows = await db
+  async (req, res): Promise<void> => {
+    const clientScope =
+      isClient(req.user) && req.user!.clientId != null
+        ? req.user!.clientId
+        : null;
+    const baseQuery = db
       .select({
         id: projectsTable.id,
         clientId: projectsTable.clientId,
@@ -95,16 +170,22 @@ router.get(
       .innerJoin(clientsTable, eq(clientsTable.id, projectsTable.clientId))
       .orderBy(desc(projectsTable.createdAt))
       .limit(8);
+    const rows =
+      clientScope != null
+        ? await baseQuery.where(eq(projectsTable.clientId, clientScope))
+        : await baseQuery;
     if (rows.length === 0) {
       res.json([]);
       return;
     }
+    const projectIds = rows.map((r) => r.id);
     const stages = await db
       .select({
         projectId: projectStagesTable.projectId,
         status: projectStagesTable.status,
       })
-      .from(projectStagesTable);
+      .from(projectStagesTable)
+      .where(inArray(projectStagesTable.projectId, projectIds));
     const counts = new Map<number, { total: number; done: number }>();
     for (const s of stages) {
       const c = counts.get(s.projectId) ?? { total: 0, done: 0 };
@@ -130,8 +211,12 @@ const requesters = alias(usersTable, "requesters");
 router.get(
   "/dashboard/pending-approvals",
   requireAuth,
-  async (_req, res): Promise<void> => {
-    const rows = await db
+  async (req, res): Promise<void> => {
+    const clientScope =
+      isClient(req.user) && req.user!.clientId != null
+        ? req.user!.clientId
+        : null;
+    const baseQuery = db
       .select({
         id: approvalsTable.id,
         projectId: approvalsTable.projectId,
@@ -156,18 +241,33 @@ router.get(
         eq(projectStagesTable.id, approvalsTable.stageId),
       )
       .innerJoin(requesters, eq(requesters.id, approvalsTable.requestedById))
-      .where(eq(approvalsTable.status, "pending"))
       .orderBy(desc(approvalsTable.requestedAt))
       .limit(10);
-    res.json(rows);
+    const where =
+      clientScope != null
+        ? and(
+            eq(approvalsTable.status, "pending"),
+            eq(projectsTable.clientId, clientScope),
+          )
+        : eq(approvalsTable.status, "pending");
+    const rows = await baseQuery.where(where);
+    const filtered =
+      clientScope != null
+        ? rows.map((r) => ({ ...r, internalComment: null }))
+        : rows;
+    res.json(filtered);
   },
 );
 
 router.get(
   "/dashboard/upcoming-payments",
   requireAuth,
-  async (_req, res): Promise<void> => {
-    const rows = await db
+  async (req, res): Promise<void> => {
+    const clientScope =
+      isClient(req.user) && req.user!.clientId != null
+        ? req.user!.clientId
+        : null;
+    const baseQuery = db
       .select({
         id: paymentsTable.id,
         projectId: paymentsTable.projectId,
@@ -185,9 +285,16 @@ router.get(
       .from(paymentsTable)
       .innerJoin(projectsTable, eq(projectsTable.id, paymentsTable.projectId))
       .innerJoin(clientsTable, eq(clientsTable.id, projectsTable.clientId))
-      .where(eq(paymentsTable.status, "pending"))
       .orderBy(asc(paymentsTable.dueDate))
       .limit(10);
+    const where =
+      clientScope != null
+        ? and(
+            eq(paymentsTable.status, "pending"),
+            eq(projectsTable.clientId, clientScope),
+          )
+        : eq(paymentsTable.status, "pending");
+    const rows = await baseQuery.where(where);
     res.json(rows);
   },
 );
@@ -195,9 +302,13 @@ router.get(
 router.get(
   "/dashboard/overdue-stages",
   requireAuth,
-  async (_req, res): Promise<void> => {
+  async (req, res): Promise<void> => {
+    const clientScope =
+      isClient(req.user) && req.user!.clientId != null
+        ? req.user!.clientId
+        : null;
     const now = new Date();
-    const rows = await db
+    const baseQuery = db
       .select({
         id: projectStagesTable.id,
         projectId: projectStagesTable.projectId,
@@ -222,16 +333,22 @@ router.get(
       )
       .innerJoin(clientsTable, eq(clientsTable.id, projectsTable.clientId))
       .leftJoin(usersTable, eq(usersTable.id, projectStagesTable.assignedToId))
-      .where(
-        and(
-          lt(projectStagesTable.dueDate, now),
-          ne(projectStagesTable.status, "completed"),
-          ne(projectStagesTable.status, "approved"),
-        ),
-      )
       .orderBy(asc(projectStagesTable.dueDate))
       .limit(10);
-    // boqItemsTable not needed; appease tsc
+    const where =
+      clientScope != null
+        ? and(
+            lt(projectStagesTable.dueDate, now),
+            ne(projectStagesTable.status, "completed"),
+            ne(projectStagesTable.status, "approved"),
+            eq(projectsTable.clientId, clientScope),
+          )
+        : and(
+            lt(projectStagesTable.dueDate, now),
+            ne(projectStagesTable.status, "completed"),
+            ne(projectStagesTable.status, "approved"),
+          );
+    const rows = await baseQuery.where(where);
     void boqItemsTable;
     res.json(rows);
   },

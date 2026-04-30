@@ -14,13 +14,15 @@ import {
   UpdateBoqItemBody,
   UpdateBoqItemParams,
 } from "@workspace/api-zod";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, requireRole } from "../lib/auth";
 
 const router: IRouter = Router();
+const staffOnly = requireRole("admin", "sales", "designer", "draftsman", "qs", "accountant");
 
 router.get(
   "/projects/:projectId/boq",
   requireAuth,
+  staffOnly,
   async (req, res): Promise<void> => {
     const params = ListProjectBoqParams.safeParse(req.params);
     if (!params.success) {
@@ -39,6 +41,7 @@ router.get(
 router.post(
   "/projects/:projectId/boq",
   requireAuth,
+  requireRole("admin", "qs"),
   async (req, res): Promise<void> => {
     const params = CreateBoqItemParams.safeParse(req.params);
     if (!params.success) {
@@ -71,7 +74,7 @@ router.post(
   },
 );
 
-router.get("/boq", requireAuth, async (_req, res): Promise<void> => {
+router.get("/boq", requireAuth, staffOnly, async (_req, res): Promise<void> => {
   const rows = await db
     .select({
       id: boqItemsTable.id,
@@ -100,6 +103,7 @@ router.get("/boq", requireAuth, async (_req, res): Promise<void> => {
 router.patch(
   "/boq-items/:id",
   requireAuth,
+  requireRole("admin", "qs"),
   async (req, res): Promise<void> => {
     const params = UpdateBoqItemParams.safeParse(req.params);
     if (!params.success) {
@@ -138,6 +142,7 @@ router.patch(
 router.delete(
   "/boq-items/:id",
   requireAuth,
+  requireRole("admin", "qs"),
   async (req, res): Promise<void> => {
     const params = DeleteBoqItemParams.safeParse(req.params);
     if (!params.success) {

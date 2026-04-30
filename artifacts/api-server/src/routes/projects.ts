@@ -13,7 +13,8 @@ import {
   UpdateProjectParams,
   DeleteProjectParams,
 } from "@workspace/api-zod";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, requireRole } from "../lib/auth";
+import { isStaff } from "../lib/authz";
 import { DEFAULT_STAGES } from "../lib/stages";
 
 const router: IRouter = Router();
@@ -81,7 +82,7 @@ router.get("/projects", requireAuth, async (req, res): Promise<void> => {
   );
 });
 
-router.post("/projects", requireAuth, async (req, res): Promise<void> => {
+router.post("/projects", requireAuth, requireRole("admin", "sales"), async (req, res): Promise<void> => {
   const parsed = CreateProjectBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -174,6 +175,10 @@ router.get("/projects/:id", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.patch("/projects/:id", requireAuth, async (req, res): Promise<void> => {
+  if (!isStaff(req.user)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
   const params = UpdateProjectParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -196,7 +201,7 @@ router.patch("/projects/:id", requireAuth, async (req, res): Promise<void> => {
   res.json(row);
 });
 
-router.delete("/projects/:id", requireAuth, async (req, res): Promise<void> => {
+router.delete("/projects/:id", requireAuth, requireRole("admin"), async (req, res): Promise<void> => {
   const params = DeleteProjectParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

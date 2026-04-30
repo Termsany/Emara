@@ -499,26 +499,43 @@ export default function ProjectDetailPage() {
           <TabsContent value="files" className="mt-4">
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               {files?.map((f) => (
-                <Card key={f.id}>
-                  <CardContent className="p-4">
-                    <div className="aspect-video bg-muted rounded mb-3 flex items-center justify-center overflow-hidden">
-                      {/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(f.fileUrl) ? (
-                        <img src={f.fileUrl} alt={f.fileName} className="object-cover w-full h-full" />
-                      ) : (
-                        <FileText className="h-10 w-10 text-muted-foreground" />
-                      )}
-                    </div>
-                    <p className="text-sm font-medium truncate">{f.fileName}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <Badge variant="outline" className="text-[10px]">
-                        {fileCategoryLabels[f.category] ?? f.category}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        v{f.version}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
+                <a
+                  key={f.id}
+                  href={f.fileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group"
+                >
+                  <Card className="transition-shadow group-hover:shadow-md group-hover:border-primary/40 h-full">
+                    <CardContent className="p-4">
+                      <div className="aspect-video bg-muted rounded mb-3 flex items-center justify-center overflow-hidden">
+                        {/\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(f.fileUrl) ? (
+                          <img
+                            src={f.fileUrl}
+                            alt={f.fileName}
+                            className="object-cover w-full h-full"
+                          />
+                        ) : (
+                          <FileText className="h-10 w-10 text-muted-foreground" />
+                        )}
+                      </div>
+                      <p className="text-sm font-medium truncate">{f.fileName}</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <Badge variant="outline" className="text-[10px]">
+                          {fileCategoryLabels[f.category] ?? f.category}
+                        </Badge>
+                        <div className="flex items-center gap-2">
+                          {!f.isPublic && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              داخلي
+                            </Badge>
+                          )}
+                          <span className="text-xs text-muted-foreground">v{f.version}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </a>
               ))}
               {(!files || files.length === 0) && (
                 <Card className="col-span-full border-dashed">

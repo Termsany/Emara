@@ -7,6 +7,7 @@ import {
   UpdateStageParams,
 } from "@workspace/api-zod";
 import { requireAuth } from "../lib/auth";
+import { canAccessProject, isStaff, projectIdLookup } from "../lib/authz";
 
 const router: IRouter = Router();
 
@@ -17,6 +18,10 @@ router.get(
     const params = ListProjectStagesParams.safeParse(req.params);
     if (!params.success) {
       res.status(400).json({ error: params.error.message });
+      return;
+    }
+    if (!(await canAccessProject(req.user!, params.data.projectId))) {
+      res.status(404).json({ error: "Project not found" });
       return;
     }
     const rows = await db
@@ -47,9 +52,18 @@ router.patch(
   "/stages/:id",
   requireAuth,
   async (req, res): Promise<void> => {
+    if (!isStaff(req.user)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
     const params = UpdateStageParams.safeParse(req.params);
     if (!params.success) {
       res.status(400).json({ error: params.error.message });
+      return;
+    }
+    const projectId = await projectIdLookup.stage(params.data.id);
+    if (projectId == null) {
+      res.status(404).json({ error: "Stage not found" });
       return;
     }
     const parsed = UpdateStageBody.safeParse(req.body);

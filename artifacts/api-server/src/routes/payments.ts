@@ -14,9 +14,11 @@ import {
   UpdatePaymentBody,
   UpdatePaymentParams,
 } from "@workspace/api-zod";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, requireRole } from "../lib/auth";
+import { canAccessProject, isClient } from "../lib/authz";
 
 const router: IRouter = Router();
+const accountantOnly = requireRole("admin", "accountant");
 
 router.get(
   "/projects/:projectId/payments",
@@ -25,6 +27,10 @@ router.get(
     const params = ListProjectPaymentsParams.safeParse(req.params);
     if (!params.success) {
       res.status(400).json({ error: params.error.message });
+      return;
+    }
+    if (!(await canAccessProject(req.user!, params.data.projectId))) {
+      res.status(404).json({ error: "Project not found" });
       return;
     }
     const rows = await db
@@ -39,6 +45,7 @@ router.get(
 router.post(
   "/projects/:projectId/payments",
   requireAuth,
+  accountantOnly,
   async (req, res): Promise<void> => {
     const params = CreatePaymentParams.safeParse(req.params);
     if (!params.success) {
@@ -66,8 +73,8 @@ router.post(
   },
 );
 
-router.get("/payments", requireAuth, async (_req, res): Promise<void> => {
-  const rows = await db
+router.get("/payments", requireAuth, async (req, res): Promise<void> => {
+  const baseQuery = db
     .select({
       id: paymentsTable.id,
       projectId: paymentsTable.projectId,
@@ -86,12 +93,17 @@ router.get("/payments", requireAuth, async (_req, res): Promise<void> => {
     .innerJoin(projectsTable, eq(projectsTable.id, paymentsTable.projectId))
     .innerJoin(clientsTable, eq(clientsTable.id, projectsTable.clientId))
     .orderBy(desc(paymentsTable.createdAt));
+  const rows =
+    isClient(req.user) && req.user!.clientId != null
+      ? await baseQuery.where(eq(projectsTable.clientId, req.user!.clientId))
+      : await baseQuery;
   res.json(rows);
 });
 
 router.patch(
   "/payments/:id",
   requireAuth,
+  accountantOnly,
   async (req, res): Promise<void> => {
     const params = UpdatePaymentParams.safeParse(req.params);
     if (!params.success) {
@@ -123,6 +135,7 @@ router.patch(
 router.delete(
   "/payments/:id",
   requireAuth,
+  accountantOnly,
   async (req, res): Promise<void> => {
     const params = DeletePaymentParams.safeParse(req.params);
     if (!params.success) {

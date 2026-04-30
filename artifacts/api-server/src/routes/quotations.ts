@@ -9,6 +9,7 @@ import {
   UpdateQuotationStatusParams,
 } from "@workspace/api-zod";
 import { requireAuth } from "../lib/auth";
+import { canAccessProject, isStaff, projectIdLookup } from "../lib/authz";
 
 const router: IRouter = Router();
 
@@ -39,6 +40,10 @@ router.get(
       res.status(400).json({ error: params.error.message });
       return;
     }
+    if (!(await canAccessProject(req.user!, params.data.projectId))) {
+      res.status(404).json({ error: "Project not found" });
+      return;
+    }
     const [row] = await db
       .select()
       .from(quotationsTable)
@@ -52,6 +57,10 @@ router.put(
   "/projects/:projectId/quotation",
   requireAuth,
   async (req, res): Promise<void> => {
+    if (!isStaff(req.user)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
     const params = UpsertProjectQuotationParams.safeParse(req.params);
     if (!params.success) {
       res.status(400).json({ error: params.error.message });
@@ -112,6 +121,15 @@ router.patch(
     const params = UpdateQuotationStatusParams.safeParse(req.params);
     if (!params.success) {
       res.status(400).json({ error: params.error.message });
+      return;
+    }
+    const projectId = await projectIdLookup.quotation(params.data.id);
+    if (projectId == null) {
+      res.status(404).json({ error: "Quotation not found" });
+      return;
+    }
+    if (!(await canAccessProject(req.user!, projectId))) {
+      res.status(404).json({ error: "Quotation not found" });
       return;
     }
     const parsed = UpdateQuotationStatusBody.safeParse(req.body);

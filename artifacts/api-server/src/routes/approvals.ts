@@ -17,6 +17,7 @@ import {
   RespondToApprovalParams,
 } from "@workspace/api-zod";
 import { requireAuth } from "../lib/auth";
+import { canAccessProject, isClient, isStaff, projectIdLookup, clientOwnsProject } from "../lib/authz";
 
 const router: IRouter = Router();
 
@@ -61,10 +62,17 @@ router.get(
       res.status(400).json({ error: params.error.message });
       return;
     }
+    if (!(await canAccessProject(req.user!, params.data.projectId))) {
+      res.status(404).json({ error: "Project not found" });
+      return;
+    }
     const rows = await approvalQuery()
       .where(eq(approvalsTable.projectId, params.data.projectId))
       .orderBy(desc(approvalsTable.requestedAt));
-    res.json(rows);
+    const filtered = isClient(req.user)
+      ? rows.map((r) => ({ ...r, internalComment: null }))
+      : rows;
+    res.json(filtered);
   },
 );
 
@@ -72,6 +80,10 @@ router.post(
   "/projects/:projectId/approvals",
   requireAuth,
   async (req, res): Promise<void> => {
+    if (!isStaff(req.user)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
     const params = RequestApprovalParams.safeParse(req.params);
     if (!params.success) {
       res.status(400).json({ error: params.error.message });
@@ -103,12 +115,15 @@ router.post(
 router.get("/approvals", requireAuth, async (req, res): Promise<void> => {
   const baseQuery = approvalQuery().orderBy(desc(approvalsTable.requestedAt));
   let rows;
-  if (req.user!.role === "client" && req.user!.clientId != null) {
+  if (isClient(req.user) && req.user!.clientId != null) {
     rows = await baseQuery.where(eq(projectsTable.clientId, req.user!.clientId));
   } else {
     rows = await baseQuery;
   }
-  res.json(rows);
+  const filtered = isClient(req.user)
+    ? rows.map((r) => ({ ...r, internalComment: null }))
+    : rows;
+  res.json(filtered);
 });
 
 router.post(
@@ -124,6 +139,17 @@ router.post(
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.message });
       return;
+    }
+    const projectId = await projectIdLookup.approval(params.data.id);
+    if (projectId == null) {
+      res.status(404).json({ error: "Approval not found" });
+      return;
+    }
+    if (isClient(req.user)) {
+      if (!(await clientOwnsProject(req.user!, projectId))) {
+        res.status(404).json({ error: "Approval not found" });
+        return;
+      }
     }
     const [updated] = await db
       .update(approvalsTable)
@@ -156,7 +182,10 @@ router.post(
         .where(eq(projectStagesTable.id, updated.stageId));
     }
     const [row] = await approvalQuery().where(eq(approvalsTable.id, updated.id));
-    res.json(row);
+    const result = isClient(req.user)
+      ? { ...row, internalComment: null }
+      : row;
+    res.json(result);
   },
 );
 

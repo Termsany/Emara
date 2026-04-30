@@ -7,6 +7,7 @@ import {
   ListProjectCommentsParams,
 } from "@workspace/api-zod";
 import { requireAuth } from "../lib/auth";
+import { canAccessProject, isClient } from "../lib/authz";
 
 const router: IRouter = Router();
 
@@ -17,6 +18,10 @@ router.get(
     const params = ListProjectCommentsParams.safeParse(req.params);
     if (!params.success) {
       res.status(400).json({ error: params.error.message });
+      return;
+    }
+    if (!(await canAccessProject(req.user!, params.data.projectId))) {
+      res.status(404).json({ error: "Project not found" });
       return;
     }
     const rows = await db
@@ -37,8 +42,7 @@ router.get(
       .innerJoin(usersTable, eq(usersTable.id, commentsTable.userId))
       .where(eq(commentsTable.projectId, params.data.projectId))
       .orderBy(asc(commentsTable.createdAt));
-    const filtered =
-      req.user?.role === "client" ? rows.filter((r) => !r.isInternal) : rows;
+    const filtered = isClient(req.user) ? rows.filter((r) => !r.isInternal) : rows;
     res.json(filtered);
   },
 );
@@ -52,11 +56,17 @@ router.post(
       res.status(400).json({ error: params.error.message });
       return;
     }
+    if (!(await canAccessProject(req.user!, params.data.projectId))) {
+      res.status(404).json({ error: "Project not found" });
+      return;
+    }
     const parsed = CreateProjectCommentBody.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.message });
       return;
     }
+    // Clients cannot create internal comments
+    const isInternal = isClient(req.user) ? false : parsed.data.isInternal;
     const [row] = await db
       .insert(commentsTable)
       .values({
@@ -65,7 +75,7 @@ router.post(
         approvalId: parsed.data.approvalId ?? null,
         userId: req.user!.id,
         commentText: parsed.data.commentText,
-        isInternal: parsed.data.isInternal,
+        isInternal,
       })
       .returning();
     res.status(201).json(row);
